@@ -26,7 +26,10 @@
     <section id="welcome-view" class="panel hero scanline">
       <div class="hero-kicker">VIRTUAL MORAL SCENARIO TEST ENGINE</div>
       <h1>가상 도덕 성향 진단 시뮬레이션</h1>
-      <p class="lead">짧은 문장과 선택을 통해 당신의 가치 판단 패턴을 분석합니다. 공정성, 관계 충성, 보편적 이타성, 목표 지향성, 관계 편향도, 응답 일관성을 바탕으로 기밀 보고서 형식의 결과를 제공합니다.</p>
+      <p class="lead">
+        짧은 문장과 선택을 통해 당신의 가치 판단 패턴을 분석합니다. 공정성, 관계 충성,
+        보편적 이타성, 목표 지향성, 관계 편향도, 응답 일관성을 바탕으로 기밀 보고서 형식의 결과를 제공합니다.
+      </p>
 
       <div class="setup-grid">
         <div class="setup-card">
@@ -138,7 +141,7 @@
           <div class="panel-header">
             <div class="header-mark cyan"></div>
             <h2>2. 심리 스펙트럼 다이어그램</h2>
-            <button type="button" class="info-btn" data-tip="핵심 6개 지표를 방사형 차트로 시각화한 영역입니다.">i</button>
+            <button type="button" class="info-btn" data-tip="10개 축은 기존 응답 점수에서 조합한 행동 성향 시각화용 합성지표입니다. 임상·의학적 성격검사가 아닙니다.">i</button>
           </div>
           <div class="chart-wrap large"><canvas id="radar-chart"></canvas></div>
         </article>
@@ -146,10 +149,10 @@
         <article class="panel chart-card">
           <div class="panel-header">
             <div class="header-mark red"></div>
-            <h2>3. 관계별 판단 변화</h2>
-            <button type="button" class="info-btn" data-tip="가까운 사람, 타인, 경쟁자, 적대 대상에 대해 평균적으로 어떤 강도의 판단을 내리는지 비교합니다.">i</button>
+            <h2>3. 대상별 가학/보복 스위치</h2>
+            <button type="button" class="info-btn" data-tip="상대와의 관계가 멀어지거나 적대적으로 변할 때 제재·보복 방향의 반응이 얼마나 커지는지를 기존 응답에서 합성한 연출용 지표입니다. 실제 가학성 진단이 아닙니다.">i</button>
           </div>
-          <p class="chart-caption">대상과의 관계 변화에 따른 평균 반응 강도</p>
+          <p class="chart-caption">대상의 자격(관계성) 변화에 따른 공격 및 통제 욕구 곡선</p>
           <div class="chart-wrap medium"><canvas id="relation-chart"></canvas></div>
         </article>
       </div>
@@ -175,11 +178,13 @@
           <button class="secondary" id="share-toggle-btn" onclick="toggleShareMenu()">공유하기</button>
           <button class="primary" onclick="restartAssessment()">다시 진단하기</button>
         </div>
+
         <div id="share-menu" class="sub-share-actions hidden">
           <button class="secondary subtle" onclick="shareResult()">내 결과 공유하기</button>
           <button class="ghost" onclick="shareTest()">친구에게 테스트 보내기</button>
           <button class="ghost" onclick="copyLink()">링크 복사</button>
         </div>
+
         <div class="aux-links">
           <button class="text-link" onclick="printReport()">보고서 출력 / PDF 저장</button>
           <a class="text-link accent-link" href="https://ideawebstudio.vercel.app/" target="_blank" rel="noopener noreferrer">제작자의 다른 앱 체험하기 ↗</a>
@@ -190,7 +195,9 @@
   </main>
 
   <footer>© 2026 MoralVector · 자기이해용 인터랙티브 테스트</footer>
+
   <div id="info-popover" class="info-popover" aria-hidden="true"></div>
+
   <script src="js/statements.js"></script>
   <script src="js/app.js"></script>
 </body>
