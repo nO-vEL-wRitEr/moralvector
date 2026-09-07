@@ -1,132 +1,572 @@
 const AXIS_META = {
-  fairness:{label:'공정성',short:'F'}, loyalty:{label:'관계 충성',short:'L'}, altruism:{label:'보편적 이타성',short:'A'}, goal:{label:'목표 우선성',short:'G'}
+  fairness: {
+    label: '절차 공정성',
+    short: 'F',
+    tip: '사람이나 상황이 달라도 비슷한 기준과 절차를 유지하려는 정도입니다.'
+  },
+  loyalty: {
+    label: '선택 충성성',
+    short: 'L',
+    tip: '가까운 사람과 자기편에게 더 큰 책임과 보호 의무를 느끼는 정도입니다.'
+  },
+  altruism: {
+    label: '보편적 이타성',
+    short: 'A',
+    tip: '친분과 무관하게 타인의 피해와 복지를 고려하려는 정도입니다.'
+  },
+  goal: {
+    label: '목표 지향성',
+    short: 'G',
+    tip: '원칙보다 결과와 효율, 성취를 우선하려는 정도입니다.'
+  },
+  relationalBias: {
+    label: '관계 편향도',
+    short: 'R',
+    tip: '상대가 누구인지에 따라 판단 강도가 얼마나 달라지는지 보여줍니다.'
+  },
+  consistency: {
+    label: '응답 일관성',
+    short: 'C',
+    tip: '비슷한 질문에서 얼마나 안정적으로 같은 방향의 응답을 했는지 보여줍니다.'
+  }
 };
-let selectedMode='casual', activeQuestions=[], currentIndex=0, answers=[], radarInstance=null, lastResult=null;
 
-function setMode(mode){
-  selectedMode=mode; const cfg=MODE_CONFIGS[mode];
-  document.querySelectorAll('.mode-card').forEach(x=>x.classList.toggle('active',x.dataset.mode===mode));
-  document.getElementById('mode-title').textContent=`${cfg.label} · ${cfg.ko}`;
-  document.getElementById('mode-description').textContent=cfg.description;
-}
+let selectedMode = 'casual';
+let activeQuestions = [];
+let currentIndex = 0;
+let answers = [];
+let radarInstance = null;
+let relationChartInstance = null;
+let lastResult = null;
+let subjectName = 'SUBJECT #0419';
+let pinnedInfoButton = null;
 
-function startAssessment(){
-  const cfg=MODE_CONFIGS[selectedMode];
-  activeQuestions=cfg.ids.map(id=>STATEMENTS.find(q=>q.id===id)).filter(Boolean);
-  answers=new Array(activeQuestions.length).fill(null); currentIndex=0;
-  show('question-view'); loadQuestion();
-}
-
-function show(id){
-  ['welcome-view','question-view','loading-view','result-view'].forEach(v=>document.getElementById(v).classList.toggle('hidden',v!==id));
-}
-
-function loadQuestion(){
-  const q=activeQuestions[currentIndex], total=activeQuestions.length;
-  document.getElementById('question-count').textContent=`QUESTION ${currentIndex+1} / ${total}`;
-  document.getElementById('top-progress').textContent=`${currentIndex+1}/${total}`;
-  document.getElementById('question-category').textContent=q.category;
-  document.getElementById('question-kicker').textContent=q.relation?`RELATION · ${relationLabel(q.relation)}`:'VALUE STATEMENT';
-  document.getElementById('question-text').textContent=q.text;
-  document.getElementById('progress-bar').style.width=`${((currentIndex+1)/total)*100}%`;
-  document.getElementById('back-button').style.visibility=currentIndex===0?'hidden':'visible';
-  document.querySelectorAll('#likert-options button').forEach((btn,i)=>btn.classList.toggle('selected',answers[currentIndex]===i+1));
-}
-
-function relationLabel(r){return {close:'가까운 사람',stranger:'모르는 사람',rival:'경쟁자',adversary:'나를 실망시킨 사람'}[r]||r}
-
-function answerQuestion(value){
-  answers[currentIndex]=value;
-  if(currentIndex<activeQuestions.length-1){currentIndex++;loadQuestion();window.scrollTo({top:0,behavior:'smooth'});}else finishAssessment();
-}
-function goBack(){if(currentIndex>0){currentIndex--;loadQuestion();}}
-
-function finishAssessment(){
-  show('loading-view'); document.getElementById('top-progress').textContent='CALCULATING';
-  setTimeout(()=>{lastResult=calculateResults();renderResults(lastResult);show('result-view');document.getElementById('top-progress').textContent='RESULT';window.scrollTo({top:0,behavior:'smooth'});},650);
-}
-
-function normalizeLikert(v,reverse=false){const n=(v-1)*25;return reverse?100-n:n}
-function average(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:50}
-
-function calculateResults(){
-  const axisValues={fairness:[],loyalty:[],altruism:[],goal:[]};
-  const pairValues={}; const consistencyGroups={};
-  activeQuestions.forEach((q,i)=>{
-    const raw=answers[i]??3; const score=normalizeLikert(raw,q.reverse);
-    axisValues[q.axis]?.push(score);
-    if(q.pair){pairValues[q.pair]??={};pairValues[q.pair][q.relation]=normalizeLikert(raw,false)}
-    if(q.consistency){consistencyGroups[q.consistency]??=[];consistencyGroups[q.consistency].push(score)}
+function setMode(mode) {
+  selectedMode = mode;
+  const cfg = MODE_CONFIGS[mode];
+  document.querySelectorAll('.mode-card').forEach((card) => {
+    card.classList.toggle('active', card.dataset.mode === mode);
   });
-  const axes=Object.fromEntries(Object.entries(axisValues).map(([k,v])=>[k,Math.round(average(v))]));
-  const spreads=Object.values(pairValues).map(group=>{const vals=Object.values(group);return vals.length>=2?Math.max(...vals)-Math.min(...vals):0});
-  const relationalBias=Math.round(average(spreads));
-  const consistencyDiffs=Object.values(consistencyGroups).filter(v=>v.length>=2).map(v=>Math.abs(v[0]-v[1]));
-  const consistency=Math.round(Math.max(0,100-average(consistencyDiffs)));
-  const archetype=getArchetype(axes,relationalBias,consistency);
-  return {...axes,relationalBias,consistency,...archetype};
+  document.getElementById('mode-title').textContent = `${cfg.label} · ${cfg.ko}`;
+  document.getElementById('mode-description').textContent = cfg.description;
 }
 
-function getArchetype(s,bias,consistency){
-  if(s.fairness>=72&&bias<=35) return {title:'보편적 원칙주의자',summary:'관계가 달라져도 비교적 같은 기준을 유지하며, 공정성과 보편적 기준을 중요하게 보는 편입니다.'};
-  if(s.loyalty>=72&&bias>=45) return {title:'관계 중심 보호자',summary:'모든 사람을 똑같이 보기보다 가까운 관계에 더 큰 책임과 의무를 느끼는 경향이 있습니다.'};
-  if(s.goal>=72&&s.fairness<60) return {title:'실용적 성취가',summary:'과정의 완벽한 일관성보다 결과와 효율을 중시하며, 상황에 맞춘 판단을 선호하는 편입니다.'};
-  if(s.altruism>=72&&s.fairness>=60) return {title:'보편적 배려형',summary:'관계가 멀어도 타인의 입장과 피해를 고려하는 경향이 강하며 공정성도 함께 중시합니다.'};
-  if(consistency<55) return {title:'상황 반응형',summary:'하나의 고정된 원칙보다 맥락과 대상에 따라 판단 기준을 유연하게 바꾸는 편입니다.'};
-  return {title:'균형형 판단자',summary:'공정성, 관계, 타인 배려, 목표 사이에서 한쪽으로 크게 치우치기보다 상황별 균형을 찾는 편입니다.'};
+function show(id) {
+  ['welcome-view', 'question-view', 'loading-view', 'result-view'].forEach((viewId) => {
+    document.getElementById(viewId).classList.toggle('hidden', viewId !== id);
+  });
 }
 
-function renderResults(r){
-  document.getElementById('archetype-title').textContent=r.title;
-  document.getElementById('archetype-summary').textContent=r.summary;
-  document.getElementById('result-code').textContent=`MV-F${r.fairness}-L${r.loyalty}-A${r.altruism}-G${r.goal}-R${r.relationalBias}-C${r.consistency}`;
-  const rows=[['공정성',r.fairness],['관계 충성',r.loyalty],['보편적 이타성',r.altruism],['목표 우선성',r.goal],['관계 편향도',r.relationalBias],['응답 일관성',r.consistency]];
-  document.getElementById('score-list').innerHTML=rows.map(([name,v])=>`<div class="score-row"><strong>${name}</strong><b>${v}</b><div class="score-bar"><span style="width:${v}%"></span></div></div>`).join('');
-  document.getElementById('insight-list').innerHTML=buildInsights(r).map(x=>`<div class="insight"><b>${x.title}</b><p>${x.body}</p></div>`).join('');
+function makeDefaultSubject() {
+  return `SUBJECT #${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+function startAssessment() {
+  const cfg = MODE_CONFIGS[selectedMode];
+  const input = document.getElementById('subject-name');
+  subjectName = (input?.value || '').trim() || makeDefaultSubject();
+  if (input && !input.value.trim()) input.value = subjectName;
+
+  activeQuestions = cfg.ids.map((id) => STATEMENTS.find((q) => q.id === id)).filter(Boolean);
+  answers = new Array(activeQuestions.length).fill(null);
+  currentIndex = 0;
+  lastResult = null;
   closeShareMenu();
-  renderRadar(r);
+  show('question-view');
+  loadQuestion();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function buildInsights(r){
+function relationLabel(relation) {
+  return {
+    close: '가까운 사람',
+    stranger: '무관한 타인',
+    rival: '경쟁자',
+    adversary: '나를 해친 사람'
+  }[relation] || relation;
+}
+
+function loadQuestion() {
+  const question = activeQuestions[currentIndex];
+  const total = activeQuestions.length;
+
+  document.getElementById('question-count').textContent = `QUESTION ${currentIndex + 1} / ${total}`;
+  document.getElementById('top-progress').textContent = `${currentIndex + 1}/${total}`;
+  document.getElementById('question-category').textContent = question.category;
+  document.getElementById('question-kicker').textContent = question.relation
+    ? `RELATION · ${relationLabel(question.relation)}`
+    : 'VALUE STATEMENT';
+  document.getElementById('question-text').textContent = question.text;
+  document.getElementById('progress-bar').style.width = `${((currentIndex + 1) / total) * 100}%`;
+  document.getElementById('back-button').style.visibility = currentIndex === 0 ? 'hidden' : 'visible';
+
+  document.querySelectorAll('#likert-options button').forEach((button, index) => {
+    button.classList.toggle('selected', answers[currentIndex] === index + 1);
+  });
+}
+
+function answerQuestion(value) {
+  answers[currentIndex] = value;
+  if (currentIndex < activeQuestions.length - 1) {
+    currentIndex += 1;
+    loadQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    finishAssessment();
+  }
+}
+
+function goBack() {
+  if (currentIndex > 0) {
+    currentIndex -= 1;
+    loadQuestion();
+  }
+}
+
+function finishAssessment() {
+  show('loading-view');
+  document.getElementById('top-progress').textContent = 'CALCULATING';
+  setTimeout(() => {
+    lastResult = calculateResults();
+    renderResults(lastResult);
+    show('result-view');
+    document.getElementById('top-progress').textContent = 'REPORT GENERATED';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 850);
+}
+
+function normalizeLikert(value, reverse = false) {
+  const score = (value - 1) * 25;
+  return reverse ? 100 - score : score;
+}
+
+function average(values, fallback = 50) {
+  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : fallback;
+}
+
+function toTenScale(value) {
+  return (value / 10).toFixed(1);
+}
+
+function calculateResults() {
+  const axisValues = { fairness: [], loyalty: [], altruism: [], goal: [] };
+  const relationValues = { close: [], stranger: [], rival: [], adversary: [] };
+  const pairValues = {};
+  const consistencyGroups = {};
+
+  activeQuestions.forEach((question, index) => {
+    const rawAnswer = answers[index] ?? 3;
+    const score = normalizeLikert(rawAnswer, question.reverse);
+
+    if (axisValues[question.axis]) axisValues[question.axis].push(score);
+    if (question.relation && relationValues[question.relation]) relationValues[question.relation].push(score);
+
+    if (question.pair) {
+      pairValues[question.pair] ||= {};
+      pairValues[question.pair][question.relation] = score;
+    }
+
+    if (question.consistency) {
+      consistencyGroups[question.consistency] ||= [];
+      consistencyGroups[question.consistency].push(score);
+    }
+  });
+
+  const axes = Object.fromEntries(
+    Object.entries(axisValues).map(([key, values]) => [key, Math.round(average(values))])
+  );
+
+  const relationAverages = Object.fromEntries(
+    Object.entries(relationValues).map(([key, values]) => [key, Math.round(average(values))])
+  );
+
+  const spreads = Object.values(pairValues)
+    .map((group) => Object.values(group))
+    .filter((values) => values.length >= 2)
+    .map((values) => Math.max(...values) - Math.min(...values));
+
+  const relationalBias = spreads.length ? Math.round(average(spreads, 0)) : 0;
+
+  const consistencyDiffs = Object.values(consistencyGroups)
+    .filter((values) => values.length >= 2)
+    .map((values) => Math.abs(values[0] - values[1]));
+
+  const consistency = consistencyDiffs.length
+    ? Math.round(Math.max(0, 100 - average(consistencyDiffs, 0)))
+    : 50;
+
+  const archetype = getLegacyArchetype({ ...axes, relationalBias, consistency });
+
+  return {
+    ...axes,
+    relationalBias,
+    consistency,
+    relationAverages,
+    ...archetype
+  };
+}
+
+function getLegacyArchetype(scores) {
+  const { fairness, altruism, goal, relationalBias, consistency } = scores;
+
+  if (fairness >= 68 && altruism >= 64 && relationalBias <= 35) {
+    return {
+      theme: 'guardian',
+      stampEn: 'UNIVERSAL GUARDIAN',
+      title: '보편적 원칙 수호자',
+      quote: '"상대방이 누구든 관계없이 보편적 절차와 공정성을 지키려 노력하며, 사적 복수나 통제보다는 법과 공정함을 중시하는 성향."',
+      body: '개인적 감정이나 이익 손실에 연연하지 않고, 사회적 규범과 약자에 대한 도덕적 의무를 우선시하는 패턴이 관찰됩니다.'
+    };
+  }
+
+  if (relationalBias >= 58 && fairness < 58 && altruism < 58) {
+    return {
+      theme: 'executor',
+      stampEn: 'CONTROLLING EXECUTIONER',
+      title: '통제형 단죄자',
+      quote: '"배신이나 적대적 상황에서 상대의 도덕적 자격을 박탈하고 심리적 통제권을 강하게 확보하려는 보복형 성향."',
+      body: '평소에는 조용해 보여도, 적대 대상으로 분류된 상대에게는 보호 기준을 급격히 낮추고 강한 제재 욕구를 드러낼 수 있습니다.'
+    };
+  }
+
+  if (goal >= 68 && fairness < 62 && consistency >= 56) {
+    return {
+      theme: 'strategist',
+      stampEn: 'COLD STRATEGIST',
+      title: '냉철한 전략가',
+      quote: '"목표 달성과 기회비용 정밀 계산에 특화되어 있으며, 상대의 심리와 언어를 고도로 활용하는 전략적 성향."',
+      body: '도덕적 명분 자체보다 상황 통제력과 실질적 성과를 중요하게 여기며, 판단 과정에서도 효율을 우선시하는 경향이 나타납니다.'
+    };
+  }
+
+  return {
+    theme: 'pragmatist',
+    stampEn: 'SELECTIVE PRAGMATIST',
+    title: '선택적 실용주의자',
+    quote: '"높은 목표 지향성과 관계 기반 차등화를 지녔으며, 상대와의 거리나 맥락에 따라 보호와 판단 기준이 달라지는 선택적 실용주의형."',
+    body: '모든 대상을 동일하게 다루기보다는 관계성과 실질적 결과를 함께 고려해 유연하게 기준을 조정하는 패턴이 관찰됩니다.'
+  };
+}
+
+function scoreBand(score) {
+  if (score >= 75) return '높음';
+  if (score >= 55) return '중간';
+  return '낮음';
+}
+
+function relationDescriptor(result) {
+  return {
+    close: result.loyalty >= 65 ? '충성심 & 책임감' : '거리 유지 & 원칙',
+    stranger: result.altruism >= 65 ? '저비용 이타성' : '선별적 개입',
+    rival: result.goal >= 65 ? '심리전 & 우월감' : '정당 경쟁 선호',
+    adversary: result.relationalBias >= 55 ? '보복 & 도덕적 배제' : '감정 절제 & 원칙 유지'
+  };
+}
+
+function buildInsights(result) {
   return [
-    {title:'공정성',body:r.fairness>=65?'사람이나 상황이 달라도 비슷한 기준을 유지하려는 편입니다.':'상황의 특수성과 관계를 고려해 기준을 조정하는 편입니다.'},
-    {title:'관계',body:r.loyalty>=65?'가까운 사람에게 더 큰 책임과 보호 의무를 느끼는 편입니다.':'친분이 판단 기준을 크게 바꾸지 않도록 거리를 두는 편입니다.'},
-    {title:'목표',body:r.goal>=65?'중요한 목표가 있다면 어느 정도의 불편이나 긴장을 감수할 수 있습니다.':'성과보다 과정과 원칙을 지키는 것을 상대적으로 더 중시합니다.'},
-    {title:'관계 편향',body:r.relationalBias>=50?'같은 행동이라도 상대가 누구인지에 따라 판단 차이가 비교적 크게 나타났습니다.':'대상이 달라져도 판단 차이가 비교적 작게 나타났습니다.'}
+    {
+      title: '판단 기준의 핵심',
+      body: result.fairness >= 65
+        ? '비슷한 상황이라면 상대가 누구든 일정한 기준을 유지하려는 경향이 비교적 강합니다.'
+        : '상황의 맥락과 관계의 무게를 함께 고려해 기준을 조정하는 편입니다.'
+    },
+    {
+      title: '관계와 충성의 비중',
+      body: result.loyalty >= 65
+        ? '가까운 사람일수록 더 큰 보호와 책임을 느끼는 경향이 두드러집니다.'
+        : '친분이 있더라도 판단 기준이 크게 흔들리지 않도록 거리를 두는 편입니다.'
+    },
+    {
+      title: '성과 vs 원칙',
+      body: result.goal >= 65
+        ? '과정이 다소 불편하더라도 결과와 실효성을 확보하는 쪽에 무게를 둡니다.'
+        : '성과보다 과정의 정당성과 원칙의 유지에 더 높은 가치를 두는 편입니다.'
+    },
+    {
+      title: '관계 편향 신호',
+      body: result.relationalBias >= 50
+        ? '동일한 행위라도 상대에 따라 판단 강도가 꽤 크게 달라지는 패턴이 나타났습니다.'
+        : '대상이 달라져도 판단 강도의 차이가 비교적 작게 유지되는 편입니다.'
+    }
   ];
 }
 
-function renderRadar(r){
-  if(radarInstance)radarInstance.destroy();
-  const ctx=document.getElementById('radar-chart');
-  radarInstance=new Chart(ctx,{type:'radar',data:{labels:['공정성','관계 충성','이타성','목표 우선','관계 편향','일관성'],datasets:[{data:[r.fairness,r.loyalty,r.altruism,r.goal,r.relationalBias,r.consistency],borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,.12)',pointBackgroundColor:'#ef4444',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'rgba(255,255,255,.08)'},angleLines:{color:'rgba(255,255,255,.08)'},pointLabels:{color:'#cbd5e1',font:{size:11}}}},plugins:{legend:{display:false}}}});
+function renderResults(result) {
+  const resultView = document.getElementById('result-view');
+  resultView.dataset.theme = result.theme;
+
+  document.getElementById('res-metadata-name').textContent = subjectName;
+  document.getElementById('res-metadata-archetype').textContent = result.title;
+  document.getElementById('res-metadata-goal').textContent = `RATING: ${toTenScale(result.goal)}/10`;
+  document.getElementById('res-metadata-bias').textContent = `RATING: ${toTenScale(result.relationalBias)}/10`;
+  document.getElementById('result-archetype-stamp').innerHTML = `${result.stampEn}<span>${result.title}</span>`;
+  document.getElementById('res-summary-quote').textContent = result.quote;
+  document.getElementById('res-summary-body').textContent = result.body;
+
+  const matrix = relationDescriptor(result);
+  document.getElementById('res-matrix-colleague').textContent = matrix.close;
+  document.getElementById('res-matrix-stranger').textContent = matrix.stranger;
+  document.getElementById('res-matrix-rival').textContent = matrix.rival;
+  document.getElementById('res-matrix-enemy').textContent = matrix.adversary;
+
+  const scoreRows = [
+    ['fairness', result.fairness],
+    ['loyalty', result.loyalty],
+    ['altruism', result.altruism],
+    ['goal', result.goal],
+    ['relationalBias', result.relationalBias],
+    ['consistency', result.consistency]
+  ];
+
+  document.getElementById('score-list').innerHTML = scoreRows.map(([key, value]) => {
+    const meta = AXIS_META[key];
+    return `
+      <div class="score-row">
+        <div class="score-row-header">
+          <strong>${meta.label}</strong>
+          <button type="button" class="info-btn" data-tip="${meta.tip}">i</button>
+        </div>
+        <b>${value}</b>
+        <small>${scoreBand(value)}</small>
+        <div class="score-bar"><span style="width:${value}%"></span></div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('insight-list').innerHTML = buildInsights(result).map((item) => `
+    <div class="insight">
+      <b>${item.title}</b>
+      <p>${item.body}</p>
+    </div>
+  `).join('');
+
+  closeShareMenu();
+  renderRadar(result);
+  renderRelationChart(result.relationAverages);
 }
 
-function toggleShareMenu(){
-  const menu=document.getElementById('share-menu');
-  const toggle=document.querySelector('.share-toggle');
-  const willOpen=menu.classList.contains('hidden');
-  menu.classList.toggle('hidden',!willOpen);
-  toggle?.setAttribute('aria-expanded',String(willOpen));
+function renderRadar(result) {
+  const ctx = document.getElementById('radar-chart');
+  if (radarInstance) radarInstance.destroy();
+
+  radarInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['공정성', '관계 충성', '이타성', '목표 지향', '관계 편향', '응답 일관성'],
+      datasets: [{
+        data: [result.fairness, result.loyalty, result.altruism, result.goal, result.relationalBias, result.consistency],
+        borderColor: '#ff4040',
+        backgroundColor: 'rgba(255,64,64,.18)',
+        pointBackgroundColor: '#8ff3ff',
+        pointBorderColor: '#ffffff',
+        pointRadius: 4,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: { display: false },
+          grid: { color: 'rgba(255,255,255,.11)' },
+          angleLines: { color: 'rgba(255,255,255,.11)' },
+          pointLabels: { color: '#d7e2f5', font: { family: 'Noto Sans KR', size: 12 } }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
 }
 
-function closeShareMenu(){
-  const menu=document.getElementById('share-menu');
-  const toggle=document.querySelector('.share-toggle');
-  menu?.classList.add('hidden');
-  toggle?.setAttribute('aria-expanded','false');
+function renderRelationChart(averages) {
+  const ctx = document.getElementById('relation-chart');
+  if (relationChartInstance) relationChartInstance.destroy();
+
+  relationChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['동료/내 사람', '무관한 타인', '경쟁자', '원수/해를 입힌 자'],
+      datasets: [{
+        data: [averages.close, averages.stranger, averages.rival, averages.adversary],
+        borderColor: '#ff4040',
+        backgroundColor: 'rgba(255,64,64,.12)',
+        fill: true,
+        tension: 0.32,
+        pointRadius: 5,
+        pointBackgroundColor: ['#31d8ff', '#d9e4ff', '#f7b955', '#ff4040'],
+        pointBorderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          min: 0,
+          max: 100,
+          grid: { color: 'rgba(255,255,255,.08)' },
+          ticks: { color: '#9fb0c9' }
+        },
+        x: {
+          grid: { color: 'rgba(255,255,255,.08)' },
+          ticks: { color: '#dbe7fb', font: { family: 'Noto Sans KR', size: 11 } }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
 }
 
-async function shareResult(){
-  if(!lastResult)return;
-  const text=`내 MoralVector 결과는 '${lastResult.title}'! 공정성 ${lastResult.fairness}, 관계 충성 ${lastResult.loyalty}, 이타성 ${lastResult.altruism}, 목표 우선 ${lastResult.goal}. 너도 해봐.`;
+function toggleShareMenu() {
+  const menu = document.getElementById('share-menu');
+  const button = document.getElementById('share-toggle-btn');
+  const isHidden = menu.classList.contains('hidden');
+  menu.classList.toggle('hidden', !isHidden);
+  button.textContent = isHidden ? '공유 옵션 닫기' : '공유하기';
+}
+
+function closeShareMenu() {
+  const menu = document.getElementById('share-menu');
+  const button = document.getElementById('share-toggle-btn');
+  if (menu) menu.classList.add('hidden');
+  if (button) button.textContent = '공유하기';
+}
+
+async function shareResult() {
+  if (!lastResult) return;
+  const text = `내 MoralVector 결과는 '${lastResult.title}'! 공정성 ${lastResult.fairness}, 관계 충성 ${lastResult.loyalty}, 이타성 ${lastResult.altruism}, 목표 지향 ${lastResult.goal}. 너도 해봐.`;
   await sharePayload(text);
 }
-async function shareTest(){await sharePayload('짧은 문장으로 보는 도덕 판단 성향 테스트 MoralVector. 너는 어떤 결과가 나오는지 해봐!')}
-async function sharePayload(text){
-  const data={title:'MoralVector',text,url:location.href.split('#')[0]};
-  try{if(navigator.share)await navigator.share(data);else{await navigator.clipboard.writeText(`${text}\n${data.url}`);status('공유 문구를 복사했어요.')}}catch(e){if(e.name!=='AbortError')status('공유에 실패했어요.')}
+
+async function shareTest() {
+  await sharePayload('짧은 문장으로 보는 도덕 판단 성향 테스트 MoralVector. 너는 어떤 결과가 나오는지 해봐!');
 }
-async function copyLink(){try{await navigator.clipboard.writeText(location.href.split('#')[0]);status('링크를 복사했어요.')}catch{status('링크 복사에 실패했어요.')}}
-function status(t){document.getElementById('share-status').textContent=t;setTimeout(()=>document.getElementById('share-status').textContent='',1800)}
-function restartAssessment(){closeShareMenu();setMode(selectedMode);show('welcome-view');document.getElementById('top-progress').textContent='READY';window.scrollTo({top:0,behavior:'smooth'})}
+
+async function sharePayload(text) {
+  const url = location.href.split('#')[0];
+  const data = { title: 'MoralVector', text, url };
+  try {
+    if (navigator.share) await navigator.share(data);
+    else {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      status('공유 문구를 복사했어요.');
+    }
+  } catch (error) {
+    if (error.name !== 'AbortError') status('공유에 실패했어요.');
+  }
+}
+
+async function copyLink() {
+  try {
+    await navigator.clipboard.writeText(location.href.split('#')[0]);
+    status('링크를 복사했어요.');
+  } catch {
+    status('링크 복사에 실패했어요.');
+  }
+}
+
+function printReport() {
+  window.print();
+}
+
+function status(text) {
+  const node = document.getElementById('share-status');
+  node.textContent = text;
+  setTimeout(() => { node.textContent = ''; }, 1800);
+}
+
+function restartAssessment() {
+  closeShareMenu();
+  show('welcome-view');
+  document.getElementById('top-progress').textContent = 'READY';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function positionPopover(button) {
+  const popover = document.getElementById('info-popover');
+  const rect = button.getBoundingClientRect();
+  const gap = 10;
+  let left = rect.left + rect.width / 2 - popover.offsetWidth / 2;
+  left = Math.max(12, Math.min(left, window.innerWidth - popover.offsetWidth - 12));
+  let top = rect.bottom + gap;
+  if (top + popover.offsetHeight > window.innerHeight - 12) {
+    top = rect.top - popover.offsetHeight - gap;
+  }
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+}
+
+function showInfo(button, pinned = false) {
+  const popover = document.getElementById('info-popover');
+  popover.textContent = button.dataset.tip || '';
+  popover.setAttribute('aria-hidden', 'false');
+  popover.classList.add('show');
+  positionPopover(button);
+  if (pinned) pinnedInfoButton = button;
+}
+
+function hideInfo(force = false) {
+  if (pinnedInfoButton && !force) return;
+  if (force) pinnedInfoButton = null;
+  const popover = document.getElementById('info-popover');
+  popover.classList.remove('show');
+  popover.setAttribute('aria-hidden', 'true');
+}
+
+function bindInfoPopover() {
+  document.addEventListener('mouseover', (event) => {
+    if (pinnedInfoButton) return;
+    const button = event.target.closest('.info-btn');
+    if (button) showInfo(button, false);
+  });
+
+  document.addEventListener('mouseout', (event) => {
+    if (pinnedInfoButton) return;
+    const button = event.target.closest('.info-btn');
+    if (button && !button.contains(event.relatedTarget)) hideInfo(true);
+  });
+
+  document.addEventListener('focusin', (event) => {
+    const button = event.target.closest('.info-btn');
+    if (button) showInfo(button, false);
+  });
+
+  document.addEventListener('focusout', (event) => {
+    const button = event.target.closest('.info-btn');
+    if (button && !pinnedInfoButton) hideInfo(true);
+  });
+
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('.info-btn');
+    if (button) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (pinnedInfoButton === button) {
+        pinnedInfoButton = null;
+        hideInfo(true);
+      } else {
+        pinnedInfoButton = button;
+        showInfo(button, true);
+      }
+      return;
+    }
+    if (!event.target.closest('#info-popover')) hideInfo(true);
+  });
+
+  window.addEventListener('resize', () => {
+    if (pinnedInfoButton) showInfo(pinnedInfoButton, true);
+  });
+
+  window.addEventListener('scroll', () => {
+    if (pinnedInfoButton) showInfo(pinnedInfoButton, true);
+  }, true);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  setMode(selectedMode);
+  bindInfoPopover();
+});
