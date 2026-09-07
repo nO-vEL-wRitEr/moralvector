@@ -83,6 +83,7 @@ function renderResults(r){
   const rows=[['공정성',r.fairness],['관계 충성',r.loyalty],['보편적 이타성',r.altruism],['목표 우선성',r.goal],['관계 편향도',r.relationalBias],['응답 일관성',r.consistency]];
   document.getElementById('score-list').innerHTML=rows.map(([name,v])=>`<div class="score-row"><strong>${name}</strong><b>${v}</b><div class="score-bar"><span style="width:${v}%"></span></div></div>`).join('');
   document.getElementById('insight-list').innerHTML=buildInsights(r).map(x=>`<div class="insight"><b>${x.title}</b><p>${x.body}</p></div>`).join('');
+  closeShareMenu();
   renderRadar(r);
 }
 
@@ -101,6 +102,21 @@ function renderRadar(r){
   radarInstance=new Chart(ctx,{type:'radar',data:{labels:['공정성','관계 충성','이타성','목표 우선','관계 편향','일관성'],datasets:[{data:[r.fairness,r.loyalty,r.altruism,r.goal,r.relationalBias,r.consistency],borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,.12)',pointBackgroundColor:'#ef4444',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'rgba(255,255,255,.08)'},angleLines:{color:'rgba(255,255,255,.08)'},pointLabels:{color:'#cbd5e1',font:{size:11}}}},plugins:{legend:{display:false}}}});
 }
 
+function toggleShareMenu(){
+  const menu=document.getElementById('share-menu');
+  const toggle=document.querySelector('.share-toggle');
+  const willOpen=menu.classList.contains('hidden');
+  menu.classList.toggle('hidden',!willOpen);
+  toggle?.setAttribute('aria-expanded',String(willOpen));
+}
+
+function closeShareMenu(){
+  const menu=document.getElementById('share-menu');
+  const toggle=document.querySelector('.share-toggle');
+  menu?.classList.add('hidden');
+  toggle?.setAttribute('aria-expanded','false');
+}
+
 async function shareResult(){
   if(!lastResult)return;
   const text=`내 MoralVector 결과는 '${lastResult.title}'! 공정성 ${lastResult.fairness}, 관계 충성 ${lastResult.loyalty}, 이타성 ${lastResult.altruism}, 목표 우선 ${lastResult.goal}. 너도 해봐.`;
@@ -113,4 +129,4 @@ async function sharePayload(text){
 }
 async function copyLink(){try{await navigator.clipboard.writeText(location.href.split('#')[0]);status('링크를 복사했어요.')}catch{status('링크 복사에 실패했어요.')}}
 function status(t){document.getElementById('share-status').textContent=t;setTimeout(()=>document.getElementById('share-status').textContent='',1800)}
-function restartAssessment(){setMode(selectedMode);show('welcome-view');document.getElementById('top-progress').textContent='READY';window.scrollTo({top:0,behavior:'smooth'})}
+function restartAssessment(){closeShareMenu();setMode(selectedMode);show('welcome-view');document.getElementById('top-progress').textContent='READY';window.scrollTo({top:0,behavior:'smooth'})}
