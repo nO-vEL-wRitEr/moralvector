@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="짧은 문장과 5점 척도로 보는 도덕 판단 성향 테스트 MoralVector" />
-  <title>MoralVector — 도덕 판단 성향 테스트</title>
+  <meta name="description" content="가치 판단 성향을 기밀 보고서처럼 보여주는 MoralVector" />
+  <title>MoralVector — 가상 도덕 성향 분석 보고서</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,22 +13,35 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><span class="brand-dot"></span><strong>MORALVECTOR</strong><span class="muted">/ VALUE PROFILE</span></div>
+  <header class="topbar no-print">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <strong>BEHAVIORAL ASSESSMENT PROTOCOL</strong>
+      <span class="muted brand-sub">MORALVECTOR</span>
+    </div>
     <span id="top-progress" class="mono muted">READY</span>
   </header>
 
   <main class="shell">
-    <section id="welcome-view" class="panel hero">
-      <span class="eyebrow">MORAL JUDGMENT PROFILE</span>
-      <h1>당신의 도덕 판단은<br><span>어떤 방향으로 움직이나요?</span></h1>
-      <p class="lead">긴 상황극 대신 짧은 문장에 답하세요. 정답을 맞히는 검사가 아니라, 공정성·관계 충성·이타성·목표 우선성 그리고 관계에 따른 판단 변화 폭을 살펴보는 테스트입니다.</p>
+    <section id="welcome-view" class="panel hero scanline">
+      <div class="hero-kicker">VIRTUAL MORAL SCENARIO TEST ENGINE</div>
+      <h1>가상 도덕 성향 진단 시뮬레이션</h1>
+      <p class="lead">짧은 문장과 선택을 통해 당신의 가치 판단 패턴을 분석합니다. 공정성, 관계 충성, 보편적 이타성, 목표 지향성, 관계 편향도, 응답 일관성을 바탕으로 기밀 보고서 형식의 결과를 제공합니다.</p>
 
-      <div class="mode-grid" id="mode-grid">
-        <button class="mode-card active" data-mode="casual" onclick="setMode('casual')"><b>QUICK</b><strong>가볍게</strong><small>12문항 · 약 2분</small></button>
-        <button class="mode-card" data-mode="standard" onclick="setMode('standard')"><b>STANDARD</b><strong>표준</strong><small>24문항 · 약 4분</small></button>
-        <button class="mode-card" data-mode="deep" onclick="setMode('deep')"><b>DEEP</b><strong>심층</strong><small>36문항 · 약 6분</small></button>
-        <button class="mode-card" data-mode="paradox" onclick="setMode('paradox')"><b>PARADOX</b><strong>관계 비교</strong><small>20문항 · 약 4분</small></button>
+      <div class="setup-grid">
+        <div class="setup-card">
+          <label for="subject-name">대상 식별 ID</label>
+          <input id="subject-name" type="text" value="SUBJECT #0419" maxlength="32" />
+        </div>
+        <div class="setup-card wide">
+          <label>진단 모드</label>
+          <div class="mode-grid" id="mode-grid">
+            <button class="mode-card active" data-mode="casual" onclick="setMode('casual')"><b>QUICK</b><strong>가볍게</strong><small>12문항 · 약 2분</small></button>
+            <button class="mode-card" data-mode="standard" onclick="setMode('standard')"><b>STANDARD</b><strong>표준</strong><small>24문항 · 약 4분</small></button>
+            <button class="mode-card" data-mode="deep" onclick="setMode('deep')"><b>DEEP</b><strong>심층</strong><small>36문항 · 약 6분</small></button>
+            <button class="mode-card" data-mode="paradox" onclick="setMode('paradox')"><b>PARADOX</b><strong>관계 비교</strong><small>20문항 · 약 4분</small></button>
+          </div>
+        </div>
       </div>
 
       <div class="mode-info">
@@ -36,16 +49,19 @@
         <span id="mode-description">핵심 성향을 빠르게 확인하는 입문 모드입니다.</span>
       </div>
 
-      <button class="primary" onclick="startAssessment()">테스트 시작하기</button>
-      <p class="disclaimer">※ 심리·의학적 진단이 아닌 자기이해용 가치관 테스트입니다.</p>
+      <button class="primary start-btn" onclick="startAssessment()">진단 시뮬레이션 시작</button>
+      <p class="disclaimer">※ 실제 심리·의학 진단이 아닌 자기이해용 인터랙티브 테스트입니다.</p>
     </section>
 
     <section id="question-view" class="hidden">
-      <div class="progress-head"><span id="question-count" class="mono">QUESTION 1 / 12</span><span id="question-category" class="tag">공정성</span></div>
+      <div class="progress-head">
+        <span id="question-count" class="mono">QUESTION 1 / 12</span>
+        <span id="question-category" class="tag">공정성</span>
+      </div>
       <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
 
-      <article class="panel question-panel">
-        <span id="question-kicker" class="eyebrow">VALUE STATEMENT</span>
+      <article class="panel question-panel scanline">
+        <span id="question-kicker" class="hero-kicker">VALUE STATEMENT</span>
         <h2 id="question-text">가까운 사람의 잘못이라도 같은 기준으로 판단해야 한다.</h2>
         <p class="scale-hint">이 문장에 얼마나 동의하나요?</p>
         <div class="likert" id="likert-options">
@@ -55,61 +71,126 @@
           <button onclick="answerQuestion(4)"><b>4</b><span>그렇다</span></button>
           <button onclick="answerQuestion(5)"><b>5</b><span>매우 그렇다</span></button>
         </div>
-        <div class="question-actions"><button id="back-button" class="ghost" onclick="goBack()">← 이전 문항</button></div>
+        <div class="question-actions no-print">
+          <button id="back-button" class="ghost" onclick="goBack()">← 이전 문항</button>
+        </div>
       </article>
     </section>
 
-    <section id="loading-view" class="hidden panel loading">
+    <section id="loading-view" class="hidden panel loading scanline">
       <div class="spinner"></div>
-      <h2>응답 패턴 계산 중</h2>
-      <p>척도 점수 · 관계 편향 · 응답 일관성을 계산하고 있습니다.</p>
+      <h2>BEHAVIORAL DATA ANALYZING...</h2>
+      <p>척도 점수 · 관계 편향 · 응답 일관성 · 아키타입 매칭을 계산하고 있습니다.</p>
     </section>
 
-    <section id="result-view" class="hidden result-stack">
-      <article class="panel result-hero">
-        <span class="eyebrow">YOUR MORALVECTOR</span>
-        <h1 id="archetype-title">균형형 원칙주의자</h1>
-        <p id="archetype-summary" class="lead"></p>
-        <div class="result-code" id="result-code">MV-F72-L61-A68-G55-R34-C82</div>
+    <section id="result-view" class="hidden result-stack" data-theme="pragmatist">
+      <article class="panel dossier-banner scanline">
+        <div class="banner-head">
+          <div>
+            <div class="section-kicker">BEHAVIORAL ANALYSIS DIVISION · DIAGNOSTIC RESULT</div>
+            <h1>가상 도덕 성향 분석 보고서</h1>
+            <p class="banner-sub" id="report-subject-label">SUBJECT DIAGNOSTIC REPORT [CLASSIFIED LEVEL 3]</p>
+          </div>
+          <div class="confidential-stamp" id="result-archetype-stamp">SELECTIVE PRAGMATIST<span>선택적 실용주의자</span></div>
+        </div>
+
+        <div class="status-grid">
+          <div class="status-card">
+            <span class="status-label">진단 대상</span>
+            <strong id="res-metadata-name">SUBJECT #0419</strong>
+          </div>
+          <div class="status-card">
+            <span class="status-label">핵심 아키타입 <button type="button" class="info-btn" data-tip="아키타입은 응답 패턴을 바탕으로 분류한 대표 성향 유형입니다.">i</button></span>
+            <strong class="accent-red" id="res-metadata-archetype">선택적 실용주의자</strong>
+          </div>
+          <div class="status-card">
+            <span class="status-label">목표 지향성 <button type="button" class="info-btn" data-tip="목표 달성과 효율을 얼마나 우선하는지 보여주는 지표입니다.">i</button></span>
+            <strong class="accent-amber" id="res-metadata-goal">RATING: 6.0/10</strong>
+          </div>
+          <div class="status-card">
+            <span class="status-label">관계 편향도 <button type="button" class="info-btn" data-tip="상대가 누구냐에 따라 판단 기준이 얼마나 달라지는지 보여주는 지표입니다.">i</button></span>
+            <strong class="accent-cyan" id="res-metadata-bias">RATING: 4.0/10</strong>
+          </div>
+        </div>
       </article>
 
-      <div class="result-grid">
-        <article class="panel chart-card"><h2>6축 프로필</h2><div class="chart-wrap"><canvas id="radar-chart"></canvas></div></article>
-        <article class="panel score-card"><h2>핵심 수치</h2><div id="score-list" class="score-list"></div></article>
+      <article class="panel summary-panel">
+        <div class="panel-header">
+          <div class="header-mark red"></div>
+          <h2>1. 핵심 요약 (Executive Summary)</h2>
+          <button type="button" class="info-btn" data-tip="Executive Summary는 전체 결과를 한눈에 요약한 핵심 정리 구역입니다.">i</button>
+        </div>
+        <div class="summary-box">
+          <p class="summary-quote" id="res-summary-quote">"높은 목표 지향성과 관계 기반 차등화가 관찰됩니다."</p>
+          <p class="summary-body" id="res-summary-body">상세 분석 내용이 여기에 표시됩니다.</p>
+        </div>
+
+        <div class="matrix-grid">
+          <div class="matrix-card cyan"><span>01. 동료/내 사람</span><strong id="res-matrix-colleague">충성심 & 책임감</strong></div>
+          <div class="matrix-card gray"><span>02. 무관한 타인</span><strong id="res-matrix-stranger">저비용 이타성</strong></div>
+          <div class="matrix-card amber"><span>03. 경쟁자</span><strong id="res-matrix-rival">심리전 & 우월감</strong></div>
+          <div class="matrix-card red"><span>04. 원수/해를 입힌 자</span><strong id="res-matrix-enemy">보복 & 도덕적 배제</strong></div>
+        </div>
+      </article>
+
+      <div class="chart-grid">
+        <article class="panel chart-card">
+          <div class="panel-header">
+            <div class="header-mark cyan"></div>
+            <h2>2. 심리 스펙트럼 다이어그램</h2>
+            <button type="button" class="info-btn" data-tip="핵심 6개 지표를 방사형 차트로 시각화한 영역입니다.">i</button>
+          </div>
+          <div class="chart-wrap large"><canvas id="radar-chart"></canvas></div>
+        </article>
+
+        <article class="panel chart-card">
+          <div class="panel-header">
+            <div class="header-mark red"></div>
+            <h2>3. 관계별 판단 변화</h2>
+            <button type="button" class="info-btn" data-tip="가까운 사람, 타인, 경쟁자, 적대 대상에 대해 평균적으로 어떤 강도의 판단을 내리는지 비교합니다.">i</button>
+          </div>
+          <p class="chart-caption">대상과의 관계 변화에 따른 평균 반응 강도</p>
+          <div class="chart-wrap medium"><canvas id="relation-chart"></canvas></div>
+        </article>
       </div>
 
+      <article class="panel breakdown-panel">
+        <div class="panel-header">
+          <div class="header-mark amber"></div>
+          <h2>4. 세부 스펙트럼 측정 점수</h2>
+        </div>
+        <div id="score-list" class="score-list dossier"></div>
+      </article>
+
       <article class="panel insight-card">
-        <h2>결과 해석</h2>
+        <div class="panel-header">
+          <div class="header-mark cyan"></div>
+          <h2>5. 해석 메모</h2>
+        </div>
         <div id="insight-list" class="insight-list"></div>
       </article>
 
-      <article class="panel share-card">
-        <h2>친구는 어떻게 답할까요?</h2>
-        <p>공유 버튼 하나로 결과나 테스트 링크를 원하는 방식으로 보낼 수 있어요.</p>
-
-        <div class="share-main-actions">
-          <button class="primary share-toggle" onclick="toggleShareMenu()" aria-expanded="false" aria-controls="share-menu">
-            공유하기 <span id="share-chevron">⌄</span>
-          </button>
-          <button class="ghost" onclick="restartAssessment()">다시 진단하기</button>
+      <article class="panel action-panel no-print">
+        <div class="action-grid">
+          <button class="secondary" id="share-toggle-btn" onclick="toggleShareMenu()">공유하기</button>
+          <button class="primary" onclick="restartAssessment()">다시 진단하기</button>
         </div>
-
-        <div id="share-menu" class="share-menu hidden">
-          <button class="secondary" onclick="shareResult()">내 결과 공유하기</button>
+        <div id="share-menu" class="sub-share-actions hidden">
+          <button class="secondary subtle" onclick="shareResult()">내 결과 공유하기</button>
           <button class="ghost" onclick="shareTest()">친구에게 테스트 보내기</button>
           <button class="ghost" onclick="copyLink()">링크 복사</button>
         </div>
-        <span id="share-status" class="muted"></span>
-
-        <div class="creator-apps">
-          <span class="muted">MORE FROM THE CREATOR</span>
-          <a class="creator-link" href="https://ideawebstudio.vercel.app/" target="_blank" rel="noopener noreferrer">제작자의 다른 앱 체험하기 ↗</a>
+        <div class="aux-links">
+          <button class="text-link" onclick="printReport()">보고서 출력 / PDF 저장</button>
+          <a class="text-link accent-link" href="https://ideawebstudio.vercel.app/" target="_blank" rel="noopener noreferrer">제작자의 다른 앱 체험하기 ↗</a>
         </div>
+        <span id="share-status" class="muted share-status"></span>
       </article>
     </section>
   </main>
 
   <footer>© 2026 MoralVector · 자기이해용 인터랙티브 테스트</footer>
+  <div id="info-popover" class="info-popover" aria-hidden="true"></div>
   <script src="js/statements.js"></script>
   <script src="js/app.js"></script>
 </body>
