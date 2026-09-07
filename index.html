@@ -85,16 +85,27 @@
 
       <article class="panel share-card">
         <h2>친구는 어떻게 답할까요?</h2>
-        <p>결과를 보내거나 테스트 링크만 공유해 비교해보세요.</p>
-        <div class="share-actions">
-          <button class="primary" onclick="shareResult()">내 결과 공유하기</button>
-          <button class="secondary" onclick="shareTest()">친구에게 테스트 보내기</button>
+        <p>공유 버튼 하나로 결과나 테스트 링크를 원하는 방식으로 보낼 수 있어요.</p>
+
+        <div class="share-main-actions">
+          <button class="primary share-toggle" onclick="toggleShareMenu()" aria-expanded="false" aria-controls="share-menu">
+            공유하기 <span id="share-chevron">⌄</span>
+          </button>
+          <button class="ghost" onclick="restartAssessment()">다시 진단하기</button>
+        </div>
+
+        <div id="share-menu" class="share-menu hidden">
+          <button class="secondary" onclick="shareResult()">내 결과 공유하기</button>
+          <button class="ghost" onclick="shareTest()">친구에게 테스트 보내기</button>
           <button class="ghost" onclick="copyLink()">링크 복사</button>
         </div>
         <span id="share-status" class="muted"></span>
-      </article>
 
-      <button class="ghost restart" onclick="restartAssessment()">처음부터 다시 하기</button>
+        <div class="creator-apps">
+          <span class="muted">MORE FROM THE CREATOR</span>
+          <a class="creator-link" href="https://ideawebstudio.vercel.app/" target="_blank" rel="noopener noreferrer">제작자의 다른 앱 체험하기 ↗</a>
+        </div>
+      </article>
     </section>
   </main>
 
