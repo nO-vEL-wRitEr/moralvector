@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="짧은 문장과 5점 척도로 보는 도덕 판단 성향 테스트 MoralVector" />
+  <title>MoralVector — 도덕 판단 성향 테스트</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-dot"></span><strong>MORALVECTOR</strong><span class="muted">/ VALUE PROFILE</span></div>
+    <span id="top-progress" class="mono muted">READY</span>
+  </header>
+
+  <main class="shell">
+    <section id="welcome-view" class="panel hero">
+      <span class="eyebrow">MORAL JUDGMENT PROFILE</span>
+      <h1>당신의 도덕 판단은<br><span>어떤 방향으로 움직이나요?</span></h1>
+      <p class="lead">긴 상황극 대신 짧은 문장에 답하세요. 정답을 맞히는 검사가 아니라, 공정성·관계 충성·이타성·목표 우선성 그리고 관계에 따른 판단 변화 폭을 살펴보는 테스트입니다.</p>
+
+      <div class="mode-grid" id="mode-grid">
+        <button class="mode-card active" data-mode="casual" onclick="setMode('casual')"><b>QUICK</b><strong>가볍게</strong><small>12문항 · 약 2분</small></button>
+        <button class="mode-card" data-mode="standard" onclick="setMode('standard')"><b>STANDARD</b><strong>표준</strong><small>24문항 · 약 4분</small></button>
+        <button class="mode-card" data-mode="deep" onclick="setMode('deep')"><b>DEEP</b><strong>심층</strong><small>36문항 · 약 6분</small></button>
+        <button class="mode-card" data-mode="paradox" onclick="setMode('paradox')"><b>PARADOX</b><strong>관계 비교</strong><small>20문항 · 약 4분</small></button>
+      </div>
+
+      <div class="mode-info">
+        <strong id="mode-title">QUICK · 가볍게</strong>
+        <span id="mode-description">핵심 성향을 빠르게 확인하는 입문 모드입니다.</span>
+      </div>
+
+      <button class="primary" onclick="startAssessment()">테스트 시작하기</button>
+      <p class="disclaimer">※ 심리·의학적 진단이 아닌 자기이해용 가치관 테스트입니다.</p>
+    </section>
+
+    <section id="question-view" class="hidden">
+      <div class="progress-head"><span id="question-count" class="mono">QUESTION 1 / 12</span><span id="question-category" class="tag">공정성</span></div>
+      <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+
+      <article class="panel question-panel">
+        <span id="question-kicker" class="eyebrow">VALUE STATEMENT</span>
+        <h2 id="question-text">가까운 사람의 잘못이라도 같은 기준으로 판단해야 한다.</h2>
+        <p class="scale-hint">이 문장에 얼마나 동의하나요?</p>
+        <div class="likert" id="likert-options">
+          <button onclick="answerQuestion(1)"><b>1</b><span>전혀 아니다</span></button>
+          <button onclick="answerQuestion(2)"><b>2</b><span>아니다</span></button>
+          <button onclick="answerQuestion(3)"><b>3</b><span>보통이다</span></button>
+          <button onclick="answerQuestion(4)"><b>4</b><span>그렇다</span></button>
+          <button onclick="answerQuestion(5)"><b>5</b><span>매우 그렇다</span></button>
+        </div>
+        <div class="question-actions"><button id="back-button" class="ghost" onclick="goBack()">← 이전 문항</button></div>
+      </article>
+    </section>
+
+    <section id="loading-view" class="hidden panel loading">
+      <div class="spinner"></div>
+      <h2>응답 패턴 계산 중</h2>
+      <p>척도 점수 · 관계 편향 · 응답 일관성을 계산하고 있습니다.</p>
+    </section>
+
+    <section id="result-view" class="hidden result-stack">
+      <article class="panel result-hero">
+        <span class="eyebrow">YOUR MORALVECTOR</span>
+        <h1 id="archetype-title">균형형 원칙주의자</h1>
+        <p id="archetype-summary" class="lead"></p>
+        <div class="result-code" id="result-code">MV-F72-L61-A68-G55-R34-C82</div>
+      </article>
+
+      <div class="result-grid">
+        <article class="panel chart-card"><h2>6축 프로필</h2><div class="chart-wrap"><canvas id="radar-chart"></canvas></div></article>
+        <article class="panel score-card"><h2>핵심 수치</h2><div id="score-list" class="score-list"></div></article>
+      </div>
+
+      <article class="panel insight-card">
+        <h2>결과 해석</h2>
+        <div id="insight-list" class="insight-list"></div>
+      </article>
+
+      <article class="panel share-card">
+        <h2>친구는 어떻게 답할까요?</h2>
+        <p>결과를 보내거나 테스트 링크만 공유해 비교해보세요.</p>
+        <div class="share-actions">
+          <button class="primary" onclick="shareResult()">내 결과 공유하기</button>
+          <button class="secondary" onclick="shareTest()">친구에게 테스트 보내기</button>
+          <button class="ghost" onclick="copyLink()">링크 복사</button>
+        </div>
+        <span id="share-status" class="muted"></span>
+      </article>
+
+      <button class="ghost restart" onclick="restartAssessment()">처음부터 다시 하기</button>
+    </section>
+  </main>
+
+  <footer>© 2026 MoralVector · 자기이해용 인터랙티브 테스트</footer>
+  <script src="js/statements.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
