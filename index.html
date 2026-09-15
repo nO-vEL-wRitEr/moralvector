@@ -3,84 +3,239 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="가치 판단 성향을 기밀 보고서처럼 보여주는 MoralVector" />
-  <title>MoralVector — 가상 도덕 성향 분석 보고서</title>
+  <meta name="description" content="MoralVector — 관계에 따라 달라지는 판단 패턴을 14개 행동 스펙트럼으로 분석하는 가상 딜레마 시뮬레이터" />
+  <meta name="theme-color" content="#0a0b0e" />
+  <title>MoralVector — Behavioral Assessment Simulator</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
-  <style>
-    .evidence-actions{display:flex;justify-content:flex-end;margin-top:12px}.evidence-toggle{font-size:12px;padding:10px 14px}.evidence-panel{margin-top:12px;padding:16px;border:1px solid rgba(49,216,255,.28);border-radius:14px;background:rgba(6,12,22,.82)}.evidence-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid rgba(86,102,133,.24)}.evidence-head strong{font-size:14px}.evidence-head span{color:#7f8da5;font:600 10px "Fira Code",monospace;letter-spacing:.08em}.evidence-rule{padding:12px 14px;margin-bottom:10px;border-left:3px solid #ff4040;background:#0a101a;border-radius:8px;color:#c9d5e8;font-size:12px;line-height:1.7}.evidence-list{display:grid;gap:8px}.evidence-item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:11px 12px;border:1px solid rgba(86,102,133,.28);border-radius:10px;background:#0b111b}.evidence-num{color:#31d8ff;font:700 11px "Fira Code",monospace}.evidence-text{font-size:12px;line-height:1.55;color:#d7e2f5}.evidence-meta{display:block;margin-top:5px;color:#7f8da5;font-size:10px}.evidence-answer{white-space:nowrap;font-size:11px;font-weight:800;color:#f7b955}.spectrum-note{margin-top:12px;color:#718098;font-size:10px;line-height:1.55}.score-row small{grid-column:1/-1}.score-row .synth-badge{margin-left:6px;color:#65738b;font:600 9px "Fira Code",monospace}@media(max-width:760px){.evidence-item{grid-template-columns:auto 1fr}.evidence-answer{grid-column:2}.evidence-head{flex-direction:column;gap:4px}}
-  </style>
-</head>
-<body>
-  <header class="topbar no-print">
-    <div class="brand"><span class="brand-dot"></span><strong>BEHAVIORAL ASSESSMENT PROTOCOL</strong><span class="muted brand-sub">MORALVECTOR</span></div>
-    <span id="top-progress" class="mono muted">READY</span>
-  </header>
 
-  <main class="shell">
-    <section id="welcome-view" class="panel hero scanline">
-      <div class="hero-kicker">VIRTUAL MORAL SCENARIO TEST ENGINE</div>
-      <h1>가상 도덕 성향 진단 시뮬레이션</h1>
-      <p class="lead">짧은 문장과 선택을 통해 당신의 가치 판단 패턴을 분석합니다. 공정성, 관계 충성, 보편적 이타성, 목표 지향성, 관계 편향도, 응답 일관성을 바탕으로 기밀 보고서 형식의 결과를 제공합니다.</p>
-      <div class="setup-grid">
-        <div class="setup-card"><label for="subject-name">대상 식별 ID</label><input id="subject-name" type="text" value="SUBJECT #0419" maxlength="32" /></div>
-        <div class="setup-card wide">
-          <label>진단 모드</label>
-          <div class="mode-grid" id="mode-grid">
-            <button class="mode-card active" data-mode="casual" onclick="setMode('casual')"><b>QUICK</b><strong>가볍게</strong><small>12문항 · 약 2분</small></button>
-            <button class="mode-card" data-mode="standard" onclick="setMode('standard')"><b>STANDARD</b><strong>표준</strong><small>24문항 · 약 4분</small></button>
-            <button class="mode-card" data-mode="deep" onclick="setMode('deep')"><b>DEEP</b><strong>심층</strong><small>36문항 · 약 6분</small></button>
-            <button class="mode-card" data-mode="paradox" onclick="setMode('paradox')"><b>PARADOX</b><strong>관계 비교</strong><small>20문항 · 약 4분</small></button>
-          </div>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: { 950: '#07080b', 900: '#0a0b0e', 850: '#0f1117', 800: '#12141c', 700: '#1a1d29', 600: '#252a3b' },
+            crimson: { 400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c' },
+            cyan: { 400: '#22d3ee', 500: '#06b6d4' }
+          },
+          fontFamily: {
+            sans: ['"Noto Sans KR"', 'sans-serif'],
+            mono: ['"Fira Code"', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="font-sans antialiased min-h-screen selection:bg-crimson-600 selection:text-white">
+  <header class="topbar no-print">
+    <div class="topbar__inner">
+      <div class="brand-lockup">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <strong>MORAL<span>VECTOR</span></strong>
+          <small>BEHAVIORAL ASSESSMENT SYSTEM</small>
         </div>
       </div>
-      <div class="mode-info"><strong id="mode-title">QUICK · 가볍게</strong><span id="mode-description">핵심 성향을 빠르게 확인하는 입문 모드입니다.</span></div>
-      <button class="primary start-btn" onclick="startAssessment()">진단 시뮬레이션 시작</button>
-      <p class="disclaimer">※ 실제 심리·의학 진단이 아닌 자기이해용 인터랙티브 테스트입니다.</p>
+      <div class="topbar__status font-mono">
+        <span id="session-id" class="hidden sm:inline">SYSTEM #2026-SIM</span>
+        <span class="status-divider hidden sm:inline">/</span>
+        <span id="top-progress-text">READY</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section id="welcome-view" class="view view--center">
+      <div class="panel hero-panel">
+        <div class="eyebrow font-mono">
+          <span class="eyebrow__line"></span>
+          VIRTUAL MORAL SCENARIO TEST ENGINE
+        </div>
+
+        <div class="hero-grid">
+          <div>
+            <p class="hero-kicker font-mono">MORAL VECTOR / ASSESSMENT PROTOCOL</p>
+            <h1>가상 도덕 성향<br /><em>진단 시뮬레이션</em></h1>
+            <p class="hero-copy">
+              극단적 가상 상황에서 내리는 선택을 추적해 관계의 거리, 공감, 이타성,
+              목표 지향성, 통제 욕구와 보복성의 변화를 분석합니다.
+            </p>
+            <p class="hero-note font-mono">SAME CHOICE. DIFFERENT YOU.</p>
+          </div>
+
+          <div class="hero-metrics" aria-label="분석 항목 미리보기">
+            <span>EMPATHY</span><span>ALTRUISM</span><span>LOYALTY</span><span>FAIRNESS</span>
+            <span>MACHIAVELLIANISM</span><span>CONTROL</span><span>REVENGE</span><span>+ 7 MORE</span>
+          </div>
+        </div>
+
+        <div class="config-grid">
+          <label class="field-card">
+            <span class="field-label"><i class="fa-regular fa-user"></i> 진단 모드</span>
+            <select id="assessment-mode">
+              <option value="self">본인 진단 (Self)</option>
+              <option value="character">창작 캐릭터 / 타인 대입</option>
+            </select>
+          </label>
+
+          <label class="field-card">
+            <span class="field-label"><i class="fa-regular fa-rectangle-list"></i> 진단 문항 수</span>
+            <select id="question-count-select">
+              <option value="5">5 문항 · Quick Scan</option>
+              <option value="10">10 문항 · Standard</option>
+              <option value="20" selected>20 문항 · Precision</option>
+              <option value="40">40 문항 · Deep Profile</option>
+              <option value="60">60 문항 · Full Protocol</option>
+            </select>
+          </label>
+
+          <label class="field-card">
+            <span class="field-label"><i class="fa-solid fa-tag"></i> 대상 식별 ID</span>
+            <input id="subject-name" type="text" value="SUBJECT #0419" maxlength="40" autocomplete="off" />
+          </label>
+        </div>
+
+        <button id="start-button" class="primary-action" type="button" onclick="startAssessment()">
+          <span><i class="fa-solid fa-play"></i> 진단 시뮬레이션 시작</span>
+          <small class="font-mono">START ASSESSMENT →</small>
+        </button>
+
+        <div class="hero-footer font-mono">
+          <span>※ 본 결과는 의학적·임상적 진단이 아닌 가상 시나리오 기반 성향 시각화입니다.</span>
+          <span>MV / v2.0</span>
+        </div>
+      </div>
     </section>
 
-    <section id="question-view" class="hidden">
-      <div class="progress-head"><span id="question-count" class="mono">QUESTION 1 / 12</span><span id="question-category" class="tag">공정성</span></div>
-      <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
-      <article class="panel question-panel scanline">
-        <span id="question-kicker" class="hero-kicker">VALUE STATEMENT</span><h2 id="question-text">가까운 사람의 잘못이라도 같은 기준으로 판단해야 한다.</h2><p class="scale-hint">이 문장에 얼마나 동의하나요?</p>
-        <div class="likert" id="likert-options"><button onclick="answerQuestion(1)"><b>1</b><span>전혀 아니다</span></button><button onclick="answerQuestion(2)"><b>2</b><span>아니다</span></button><button onclick="answerQuestion(3)"><b>3</b><span>보통이다</span></button><button onclick="answerQuestion(4)"><b>4</b><span>그렇다</span></button><button onclick="answerQuestion(5)"><b>5</b><span>매우 그렇다</span></button></div>
-        <div class="question-actions no-print"><button id="back-button" class="ghost" onclick="goBack()">← 이전 문항</button></div>
-      </article>
-    </section>
-
-    <section id="loading-view" class="hidden panel loading scanline"><div class="spinner"></div><h2>BEHAVIORAL DATA ANALYZING...</h2><p>척도 점수 · 관계 편향 · 응답 일관성 · 아키타입 매칭을 계산하고 있습니다.</p></section>
-
-    <section id="result-view" class="hidden result-stack" data-theme="pragmatist">
-      <article class="panel dossier-banner scanline">
-        <div class="banner-head"><div><div class="section-kicker">BEHAVIORAL ANALYSIS DIVISION · DIAGNOSTIC RESULT</div><h1>가상 도덕 성향 분석 보고서</h1><p class="banner-sub" id="report-subject-label">SUBJECT DIAGNOSTIC REPORT [CLASSIFIED LEVEL 3]</p></div><div class="confidential-stamp" id="result-archetype-stamp">SELECTIVE PRAGMATIST<span>선택적 실용주의자</span></div></div>
-        <div class="status-grid"><div class="status-card"><span class="status-label">진단 대상</span><strong id="res-metadata-name">SUBJECT #0419</strong></div><div class="status-card"><span class="status-label">핵심 아키타입 <button type="button" class="info-btn" data-tip="아키타입은 응답 패턴을 바탕으로 분류한 대표 성향 유형입니다.">i</button></span><strong class="accent-red" id="res-metadata-archetype">선택적 실용주의자</strong></div><div class="status-card"><span class="status-label">목표 지향성 <button type="button" class="info-btn" data-tip="목표 달성과 효율을 얼마나 우선하는지 보여주는 지표입니다.">i</button></span><strong class="accent-amber" id="res-metadata-goal">RATING: 6.0/10</strong></div><div class="status-card"><span class="status-label">관계 편향도 <button type="button" class="info-btn" data-tip="상대가 누구냐에 따라 판단 기준이 얼마나 달라지는지 보여주는 지표입니다.">i</button></span><strong class="accent-cyan" id="res-metadata-bias">RATING: 4.0/10</strong></div></div>
-      </article>
-
-      <article class="panel summary-panel">
-        <div class="panel-header"><div class="header-mark red"></div><h2>1. 핵심 요약 (Executive Summary)</h2><button type="button" class="info-btn" data-tip="Executive Summary는 전체 결과를 한눈에 요약한 핵심 정리 구역입니다.">i</button></div>
-        <div class="summary-box"><p class="summary-quote" id="res-summary-quote">"높은 목표 지향성과 관계 기반 차등화가 관찰됩니다."</p><p class="summary-body" id="res-summary-body">상세 분석 내용이 여기에 표시됩니다.</p></div>
-        <div class="evidence-actions no-print"><button id="evidence-toggle" class="ghost evidence-toggle" onclick="toggleEvidencePanel()" aria-expanded="false" aria-controls="evidence-panel">왜 이렇게 분석했나요? · 근거 보기</button></div>
-        <div id="evidence-panel" class="evidence-panel hidden"><div class="evidence-head"><strong>ANALYSIS TRACE · 판정 근거</strong><span>ANSWER-BASED TRACE</span></div><div id="evidence-rule" class="evidence-rule"></div><div id="evidence-list" class="evidence-list"></div></div>
-        <div class="matrix-grid"><div class="matrix-card cyan"><span>01. 동료/내 사람</span><strong id="res-matrix-colleague">충성심 & 책임감</strong></div><div class="matrix-card gray"><span>02. 무관한 타인</span><strong id="res-matrix-stranger">저비용 이타성</strong></div><div class="matrix-card amber"><span>03. 경쟁자</span><strong id="res-matrix-rival">심리전 & 우월감</strong></div><div class="matrix-card red"><span>04. 원수/해를 입힌 자</span><strong id="res-matrix-enemy">보복 & 도덕적 배제</strong></div></div>
-      </article>
-
-      <div class="chart-grid">
-        <article class="panel chart-card"><div class="panel-header"><div class="header-mark cyan"></div><h2>2. 심리 스펙트럼 다이어그램</h2><button type="button" class="info-btn" data-tip="10개 축은 기존 응답 점수에서 조합한 행동 성향 시각화용 합성지표입니다. 임상·의학적 성격검사가 아닙니다.">i</button></div><div class="chart-wrap large"><canvas id="radar-chart"></canvas></div></article>
-        <article class="panel chart-card"><div class="panel-header"><div class="header-mark red"></div><h2>3. 대상별 가학/보복 스위치</h2><button type="button" class="info-btn" data-tip="상대와의 관계가 멀어지거나 적대적으로 변할 때 제재·보복 방향의 반응이 얼마나 커지는지를 기존 응답에서 합성한 연출용 지표입니다. 실제 가학성 진단이 아닙니다.">i</button></div><p class="chart-caption">대상의 자격(관계성) 변화에 따른 공격 및 통제 욕구 곡선</p><div class="chart-wrap medium"><canvas id="relation-chart"></canvas></div></article>
+    <section id="question-view" class="view hidden">
+      <div class="question-head">
+        <div>
+          <span class="font-mono muted-label" id="question-tracker">SCENARIO 1 OF 20</span>
+          <div class="progress-track" aria-hidden="true">
+            <div id="progress-bar-inner" class="progress-fill" style="width:5%"></div>
+          </div>
+        </div>
+        <span id="question-progress-text" class="font-mono question-percent">5% COMPLETE</span>
       </div>
 
-      <article class="panel breakdown-panel"><div class="panel-header"><div class="header-mark amber"></div><h2>4. 세부 스펙트럼 측정 점수</h2><button type="button" class="info-btn" data-tip="아래 10개 수치는 그래프와 동일한 합성지표입니다. 기초 응답축을 조합해 만든 연출용 프로파일이며 임상척도가 아닙니다.">i</button></div><div id="score-list" class="score-list dossier"></div><p class="spectrum-note">※ 세부 스펙트럼은 5점 응답의 기초축과 관계 변화량을 조합한 시각화용 합성지표입니다.</p></article>
-      <article class="panel insight-card"><div class="panel-header"><div class="header-mark cyan"></div><h2>5. 해석 메모</h2></div><div id="insight-list" class="insight-list"></div></article>
+      <article class="panel scenario-panel">
+        <div class="scenario-header">
+          <div class="scenario-heading">
+            <div class="scenario-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+            <div>
+              <span id="scenario-code" class="scenario-code font-mono">SITUATION #01</span>
+              <h2 id="scenario-title">시나리오 제목</h2>
+            </div>
+          </div>
+          <div id="target-relation-badge-wrapper" class="target-badge">
+            <div id="target-relation-text-color">
+              <i class="fa-solid fa-user-group"></i>
+              <span id="target-relation-text">TARGET: 동료 / 내 사람</span>
+            </div>
+          </div>
+        </div>
 
-      <article class="panel action-panel no-print"><div class="action-grid"><button class="secondary" id="share-toggle-btn" onclick="toggleShareMenu()">공유하기</button><button class="primary" onclick="restartAssessment()">다시 진단하기</button></div><div id="share-menu" class="sub-share-actions hidden"><button class="secondary subtle" onclick="shareResult()">내 결과 공유하기</button><button class="ghost" onclick="shareTest()">친구에게 테스트 보내기</button><button class="ghost" onclick="copyLink()">링크 복사</button></div><div class="aux-links"><button class="text-link" onclick="printReport()">보고서 출력 / PDF 저장</button><a class="text-link accent-link" href="https://ideawebstudio.vercel.app/" target="_blank" rel="noopener noreferrer">제작자의 다른 앱 체험하기 ↗</a></div><span id="share-status" class="muted share-status"></span></article>
+        <div id="scenario-desc" class="scenario-copy">시나리오 내용이 여기에 표시됩니다.</div>
+
+        <div class="choice-label font-mono">
+          <span>SELECT RESPONSE</span><span>ONE ANSWER REQUIRED</span>
+        </div>
+        <div id="options-container" class="options-list"></div>
+      </article>
+
+      <div class="question-footer font-mono">
+        <span>EVERY CHOICE REVEALS A PATTERN.</span>
+        <span id="bottom-next-indicator">SCENARIO 2 →</span>
+      </div>
+    </section>
+
+    <section id="loading-view" class="view view--center hidden" aria-live="polite">
+      <div class="analysis-box">
+        <div class="analysis-loader" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <p class="font-mono analysis-kicker">BEHAVIORAL VECTOR COMPUTATION</p>
+        <h2>선택 패턴을 분석하고 있습니다.</h2>
+        <div class="analysis-lines font-mono">
+          <span>DECISION PATTERN</span><span>MORAL WEIGHT</span><span>RELATION SHIFT</span><span>SPECTRUM ANALYSIS</span>
+        </div>
+        <div class="loading-track"><span></span></div>
+        <p class="analysis-caption">14개 스펙트럼 가중치 산출 · 관계별 변화량 비교 · 결과 보고서 구성</p>
+      </div>
+    </section>
+
+    <section id="result-view" class="view hidden result-view">
+      <div class="panel report-hero">
+        <div class="report-title-row">
+          <div>
+            <p class="eyebrow font-mono"><span class="eyebrow__line"></span>BEHAVIORAL ANALYSIS DIVISION / DIAGNOSTIC RESULT</p>
+            <h1>가상 도덕 성향 분석 보고서</h1>
+            <p class="report-code font-mono">SUBJECT DIAGNOSTIC REPORT · SIMULATION OUTPUT</p>
+          </div>
+          <div id="result-archetype-stamp" class="report-stamp font-mono">SELECTIVE PRAGMATIST<br /><small>선택적 실용주의자</small></div>
+        </div>
+
+        <div class="report-meta font-mono">
+          <div><span>진단 대상</span><strong id="res-metadata-name">SUBJECT #0419</strong></div>
+          <div><span>핵심 아키타입</span><strong id="res-metadata-archetype">선택적 실용주의자</strong></div>
+          <div><span>목표 지향성</span><strong id="res-metadata-goal">RATING: 5/10</strong></div>
+          <div><span>보복성 스위치</span><strong id="res-metadata-sadism">RATING: 5/10</strong></div>
+        </div>
+      </div>
+
+      <div class="panel report-section">
+        <div class="section-heading"><span>01</span><h2>핵심 요약 <small>Executive Summary</small></h2></div>
+        <div class="summary-box">
+          <p id="res-summary-quote" class="summary-quote"></p>
+          <p id="res-summary-body" class="summary-body"></p>
+        </div>
+        <div class="relation-grid">
+          <div><small class="font-mono cyan-text">01 / INNER CIRCLE</small><strong id="res-matrix-colleague">관계 기반 판단</strong></div>
+          <div><small class="font-mono">02 / STRANGER</small><strong id="res-matrix-stranger">비용 기반 이타성</strong></div>
+          <div><small class="font-mono amber-text">03 / RIVAL</small><strong id="res-matrix-rival">경쟁 상황 판단</strong></div>
+          <div><small class="font-mono red-text">04 / ENEMY</small><strong id="res-matrix-enemy">보복·배제 반응</strong></div>
+        </div>
+      </div>
+
+      <div class="report-grid">
+        <div class="panel report-section report-grid__wide">
+          <div class="section-heading"><span>02</span><h2>심리 스펙트럼 <small>Behavioral Vector</small></h2></div>
+          <div class="chart-wrap chart-wrap--radar"><canvas id="radarChartCanvas"></canvas></div>
+        </div>
+        <div class="panel report-section">
+          <div class="section-heading"><span>03</span><h2>관계별 보복 스위치 <small>Relation Shift</small></h2></div>
+          <p class="chart-note">무관한 타인 → 경쟁자 → 원수로 관계가 변화할 때의 공격·보복성 변화</p>
+          <div class="chart-wrap"><canvas id="sadismChartCanvas"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel report-section">
+        <div class="section-heading"><span>04</span><h2>14개 세부 스펙트럼 <small>Spectrum Breakdown</small></h2></div>
+        <div id="spectrum-bars-container" class="spectrum-grid font-mono"></div>
+      </div>
+
+      <div class="report-actions no-print">
+        <button type="button" class="secondary-action" onclick="restartAssessment()"><i class="fa-solid fa-rotate-right"></i> 진단 다시 하기</button>
+        <button type="button" class="primary-action primary-action--compact" onclick="window.print()"><i class="fa-solid fa-print"></i> 보고서 출력 / PDF 저장</button>
+      </div>
     </section>
   </main>
 
-  <footer>© 2026 MoralVector · 자기이해용 인터랙티브 테스트</footer><div id="info-popover" class="info-popover" aria-hidden="true"></div><script src="js/statements.js"></script><script src="js/app.js"></script><script src="js/legacy-charts.js"></script>
+  <footer class="site-footer font-mono no-print">
+    <span>MORALVECTOR</span><span>BEYOND A SINGLE SCORE.</span>
+  </footer>
+
+  <script src="js/dilemmas-1.js"></script>
+  <script src="js/dilemmas-2.js"></script>
+  <script src="js/dilemmas-3.js"></script>
+  <script src="js/dilemmas-4.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
